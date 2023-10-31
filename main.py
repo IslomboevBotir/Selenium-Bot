@@ -183,18 +183,19 @@ from bs4 import BeautifulSoup
 # for thread in threads:
 #     thread.join()
 
-
+import random
 
 from selenium.webdriver.support.ui import WebDriverWait
 import threading
 import time
 from excelParse import listArr
+from selenium.webdriver.common.action_chains import ActionChains 
 
 from selenium.webdriver.support import expected_conditions as EC
 
 from selenium.webdriver.chrome.options import Options
 from selenium import webdriver
-
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException, ElementClickInterceptedException, \
     ElementNotInteractableException, ElementNotSelectableException, ElementNotVisibleException, \
@@ -220,11 +221,12 @@ def screenshot_thread(mydata):
 
     for index, data in enumerate(mydata):
         
-        
+            ref_url = "?new_format_start&utm_source=google&utm_medium=cpc&utm_campaign_id={campaignid}&utm_term={keyword}&utm_adgroup_id={adgroupid}&target_id={targetid}&loc_interest_ms={loc_interest_ms}&loc_physical_ms={loc_physical_ms}&matchtype={matchtype}&network={network}&device={device}&device_model={device_model}&if_mobile={ifmobile:[mobile]}&not_mobile={ifnotmobile:[computer_tablet]}&if_search={ifsearch:[google_search_network]}&if_display={ifcontent:[google_display_network]}&ad_id={creative}&placement={placement}&target={target}&ad_position={adposition}&source_id={sourceid}&ad_type={adtype}&new_format_end"
+
            
             # print(data['url'], "index ", index)
             driver.implicitly_wait(10)
-            driver.get(data['url'])
+            driver.get(data['url']+ref_url)
             # driver.get('https://sales-inquiries.ae/axcapital/seslia-tower/')
             all_forms = driver.find_elements(By.TAG_NAME, 'form')
             # all_forms = driver.find_elements(By.ID, 'user-login-form')
@@ -272,7 +274,38 @@ def screenshot_thread(mydata):
                         # print(popupForm[0].get_attribute('outerHTML'))
                         if popupForm[0].get_attribute('style') == 'display: block;':
                             # print("Пришел")
+                            n=random.randint(100000000,999999999) 
+                            
                             checkElement = False
+                            elementPhone = driver.find_element(By.XPATH, "//form[@data-gtag-submit='popup']//input[@name='phone']")
+                            elementName = driver.find_element(By.XPATH, "//form[@data-gtag-submit='popup']//input[@name='name']")
+                            inputs = driver.find_element(By.XPATH, "//form[@data-gtag-submit='popup']//input[@name='email']")
+                            btn = driver.find_element(By.XPATH, "//form[@data-gtag-submit='popup']//button[@type='submit']")
+                            print(popupForm[0].get_attribute('id'))
+                            poper = popupForm[0].get_attribute('id')
+                            elementPhone.send_keys(n)
+                            elementName.send_keys('crawler_checker')
+                            inputs.send_keys('crawler@tester.com')
+                            time.sleep(3)
+                            btn.click()
+                            
+                            print("//form[@id="+poper+"//button[@data-bs-dismiss='modal']")
+                            closebtn = driver.find_element(By.XPATH, "//div[contains (@id,"+poper+")]//button[@data-bs-dismiss='modal']")
+                            print(closebtn.location['x'])
+                            actions = ActionChains(driver) 
+                            actions.send_keys(Keys.ESCAPE)
+                            actions.perform()
+                            time.sleep(3)
+                            okbtn = driver.find_element(By.XPATH, "//button[text()='OK']")
+                            
+                            time.sleep(1)
+                            okbtn.click()
+                            # actions.move_to_element(closebtn,closebtn.location['x'], closebtn.location['y'])
+                            # actions.click()
+                            # actions.perform()
+                            # print(inputs)
+                            
+                            time.sleep(20000)
             # for form in all_forms
             # print(buttons)
             for datats in buttons:
@@ -280,7 +313,7 @@ def screenshot_thread(mydata):
                 # driver.execute_script("arguments[0].setAttribute('id',arguments[0])",datats, "32423432")
          
 
-                print(datats)
+                # print(datats)
                 # elemntid = datats.get_attribute('innerHTML')
                 # driver.execute_script('id=234234234234', all_forms)
                 # element = driver.find_element(By.TAG_NAME, 'form')
@@ -307,9 +340,9 @@ def screenshot_thread(mydata):
         # time.sleep(1000)
         # print(element.get_attribute('outerHTML'))
         # time.sleep(10)
-    driver.quit()
+    # driver.quit()
 
-num_threads = 5  # You can change the number of threads as needed
+num_threads = 2  # You can change the number of threads as needed
 
 threads = []
 cursor = 0
