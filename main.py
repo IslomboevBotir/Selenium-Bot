@@ -18,6 +18,7 @@
 # from selenium import webdriver
 # from concurrent.futures import ThreadPoolExecutor
 from bs4 import BeautifulSoup
+from model import today
 # from selenium.webdriver.common.keys import Keys
 # from selenium.webdriver.common.by import By
 # from selenium.common.exceptions import NoSuchElementException ,ElementClickInterceptedException, ElementNotInteractableException, ElementNotSelectableException, ElementNotVisibleException, ImeActivationFailedException, InsecureCertificateException, InvalidArgumentException, InvalidCookieDomainException, InvalidCoordinatesException, InvalidElementStateException, InvalidSelectorException, InvalidSessionIdException, InvalidSwitchToTargetException, MoveTargetOutOfBoundsException, NoAlertPresentException, NoSuchAttributeException, NoSuchCookieException, NoSuchFrameException, NoSuchWindowException, StaleElementReferenceException, TimeoutException, UnableToSetCookieException, UnexpectedAlertPresentException, UnexpectedTagNameException
@@ -184,17 +185,17 @@ from bs4 import BeautifulSoup
 #     thread.join()
 
 import random
-
 from selenium.webdriver.support.ui import WebDriverWait
 import threading
 import time
+import datetime
+
 from excelParse import listArr
 from selenium.webdriver.common.action_chains import ActionChains 
-
 from selenium.webdriver.support import expected_conditions as EC
-
 from selenium.webdriver.chrome.options import Options
 from selenium import webdriver
+from pymongo import MongoClient
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException, ElementClickInterceptedException, \
@@ -205,159 +206,176 @@ from selenium.common.exceptions import NoSuchElementException, ElementClickInter
     NoSuchCookieException, NoSuchFrameException, NoSuchWindowException, StaleElementReferenceException, \
     TimeoutException, UnableToSetCookieException, UnexpectedAlertPresentException, UnexpectedTagNameException
 
+client = MongoClient('mongodb://localhost:27017/Crawler') 
+mydatabase = client['Crawler']
+namedir = mydatabase['Crawler']
+todayDate = mydatabase['todayDate']
+today_date = datetime.date.today()
+new_today_date = today_date.strftime("%d/%m/%Y")
+todayDate.insert_one({"time": new_today_date, "report": []})
+searchDate = todayDate.find_one({"time": "02/00/2023"})
+if searchDate != None:
+    if new_today_date == searchDate['time']:
+        print("что то есть")
+    else:
+            print("нету")
+else:
+    todayDate.insert_one({"time": new_today_date, "report": []})
 
-def screenshot_thread(mydata):
-    chrome_options = Options()
-    chrome_options.add_argument('--log-level=CRITICAL')
-    chrome_options.add_argument('--disable-extensions')
-    chrome_options.add_argument('--disable-gpu')
-    chrome_options.add_argument('--enable-automation')
-    chrome_options.add_argument('--ignore-certificate-errors')
-    chrome_options.add_argument('--ignore-ssl-errors')
-    chrome_options.add_argument("--enable-logging")
-    chrome_options.add_argument('--no-sandbox')
-    chrome_options.add_argument('--disable-dev-shm-usage')
-    driver = webdriver.Chrome()
+# print(namedir.find_one())
 
-    for index, data in enumerate(mydata):
+# def screenshot_thread(mydata):
+#     chrome_options = Options()
+#     chrome_options.add_argument('--log-level=CRITICAL')
+#     chrome_options.add_argument('--disable-extensions')
+#     chrome_options.add_argument('--disable-gpu')
+#     chrome_options.add_argument('--enable-automation')
+#     chrome_options.add_argument('--ignore-certificate-errors')
+#     chrome_options.add_argument('--ignore-ssl-errors')
+#     chrome_options.add_argument("--enable-logging")
+#     chrome_options.add_argument('--no-sandbox')
+#     chrome_options.add_argument('--disable-dev-shm-usage')
+#     driver = webdriver.Chrome()
+
+#     for index, data in enumerate(mydata):
         
-            ref_url = "?new_format_start&utm_source=google&utm_medium=cpc&utm_campaign_id={campaignid}&utm_term={keyword}&utm_adgroup_id={adgroupid}&target_id={targetid}&loc_interest_ms={loc_interest_ms}&loc_physical_ms={loc_physical_ms}&matchtype={matchtype}&network={network}&device={device}&device_model={device_model}&if_mobile={ifmobile:[mobile]}&not_mobile={ifnotmobile:[computer_tablet]}&if_search={ifsearch:[google_search_network]}&if_display={ifcontent:[google_display_network]}&ad_id={creative}&placement={placement}&target={target}&ad_position={adposition}&source_id={sourceid}&ad_type={adtype}&new_format_end"
+#             ref_url = "?new_format_start&utm_source=google&utm_medium=cpc&utm_campaign_id={campaignid}&utm_term={keyword}&utm_adgroup_id={adgroupid}&target_id={targetid}&loc_interest_ms={loc_interest_ms}&loc_physical_ms={loc_physical_ms}&matchtype={matchtype}&network={network}&device={device}&device_model={device_model}&if_mobile={ifmobile:[mobile]}&not_mobile={ifnotmobile:[computer_tablet]}&if_search={ifsearch:[google_search_network]}&if_display={ifcontent:[google_display_network]}&ad_id={creative}&placement={placement}&target={target}&ad_position={adposition}&source_id={sourceid}&ad_type={adtype}&new_format_end"
 
            
-            # print(data['url'], "index ", index)
-            driver.implicitly_wait(10)
-            driver.get(data['url']+ref_url)
-            # driver.get('https://sales-inquiries.ae/axcapital/seslia-tower/')
-            all_forms = driver.find_elements(By.TAG_NAME, 'form')
-            # all_forms = driver.find_elements(By.ID, 'user-login-form')
+#             # print(data['url'], "index ", index)
+#             driver.implicitly_wait(10)
+#             driver.get(data['url']+ref_url)
+#             # driver.get('https://sales-inquiries.ae/axcapital/seslia-tower/')
+#             all_forms = driver.find_elements(By.TAG_NAME, 'form')
+#             # all_forms = driver.find_elements(By.ID, 'user-login-form')
 
-            # print(all_forms)
-            driver.implicitly_wait(10)
+#             # print(all_forms)
+#             driver.implicitly_wait(10)
 
-            buttons = driver.find_elements(By.XPATH, "//button[(@data-bs-toggle='modal')]")
-            popupForm = None
-            time.sleep(5)
-            popupForm1 = driver.find_elements(by=By.ID, value='popupModal')
-            popupForm2 = driver.find_elements(by=By.ID, value='Modal')
-            popupForm3 = driver.find_elements(by=By.ID, value='popup')
-            if len(popupForm1)>0:
-                popupForm = popupForm1
-                print('popupForm1 - ТУТ что то есть ')
-            if len(popupForm2)>0:
-                popupForm = popupForm2
-                print('popupForm2 - ТУТ что то есть ')
-            if len(popupForm3)>0:
-                popupForm = popupForm3
-                print('popupForm3 - ТУТ что то есть ')
-            try:
+#             buttons = driver.find_elements(By.XPATH, "//button[(@data-bs-toggle='modal')]")
+#             popupForm = None
+#             time.sleep(5)
+#             popupForm1 = driver.find_elements(by=By.ID, value='popupModal')
+#             popupForm2 = driver.find_elements(by=By.ID, value='Modal')
+#             popupForm3 = driver.find_elements(by=By.ID, value='popup')
+#             if len(popupForm1)>0:
+#                 popupForm = popupForm1
+#                 print('popupForm1 - ТУТ что то есть ')
+#             if len(popupForm2)>0:
+#                 popupForm = popupForm2
+#                 print('popupForm2 - ТУТ что то есть ')
+#             if len(popupForm3)>0:
+#                 popupForm = popupForm3
+#                 print('popupForm3 - ТУТ что то есть ')
+#             try:
 
-                popupForm
+#                 popupForm
                
-            except (NoSuchElementException, ElementClickInterceptedException, ElementNotInteractableException,
-                ElementNotSelectableException, ElementNotVisibleException, ImeActivationFailedException,
-                InsecureCertificateException, InvalidArgumentException, InvalidCookieDomainException,
-                InvalidCoordinatesException, InvalidElementStateException, InvalidSelectorException,
-                InvalidSessionIdException, InvalidSwitchToTargetException, MoveTargetOutOfBoundsException,
-                NoAlertPresentException, NoSuchAttributeException, NoSuchCookieException, NoSuchFrameException,
-                NoSuchWindowException, StaleElementReferenceException, TimeoutException, UnableToSetCookieException,
-                UnexpectedAlertPresentException, UnexpectedTagNameException) as err:
-                pass
-            if popupForm:
-                mytime = 1
-                timing = time.time()
-                checkElement = True
-                while checkElement:
-                    if time.time() - timing > mytime:
-                        timing = time.time()
-                        # print(mytime, "seconds")
-                        print(data['url'])
-                        # print(popupForm[0].get_attribute('outerHTML'))
-                        if popupForm[0].get_attribute('style') == 'display: block;':
-                            # print("Пришел")
-                            n=random.randint(100000000,999999999) 
+#             except (NoSuchElementException, ElementClickInterceptedException, ElementNotInteractableException,
+#                 ElementNotSelectableException, ElementNotVisibleException, ImeActivationFailedException,
+#                 InsecureCertificateException, InvalidArgumentException, InvalidCookieDomainException,
+#                 InvalidCoordinatesException, InvalidElementStateException, InvalidSelectorException,
+#                 InvalidSessionIdException, InvalidSwitchToTargetException, MoveTargetOutOfBoundsException,
+#                 NoAlertPresentException, NoSuchAttributeException, NoSuchCookieException, NoSuchFrameException,
+#                 NoSuchWindowException, StaleElementReferenceException, TimeoutException, UnableToSetCookieException,
+#                 UnexpectedAlertPresentException, UnexpectedTagNameException) as err:
+#                 pass
+#             if popupForm:
+#                 mytime = 1
+#                 timing = time.time()
+#                 checkElement = True
+#                 while checkElement:
+#                     if time.time() - timing > mytime:
+#                         timing = time.time()
+#                         # print(mytime, "seconds")
+#                         print(data['url'])
+#                         # print(popupForm[0].get_attribute('outerHTML'))
+#                         if popupForm[0].get_attribute('style') == 'display: block;':
+#                             # print("Пришел")
+#                             n=random.randint(100000000,999999999) 
                             
-                            checkElement = False
-                            elementPhone = driver.find_element(By.XPATH, "//form[@data-gtag-submit='popup']//input[@name='phone']")
-                            elementName = driver.find_element(By.XPATH, "//form[@data-gtag-submit='popup']//input[@name='name']")
-                            inputs = driver.find_element(By.XPATH, "//form[@data-gtag-submit='popup']//input[@name='email']")
-                            btn = driver.find_element(By.XPATH, "//form[@data-gtag-submit='popup']//button[@type='submit']")
-                            print(popupForm[0].get_attribute('id'))
-                            poper = popupForm[0].get_attribute('id')
-                            elementPhone.send_keys(n)
-                            elementName.send_keys('crawler_checker')
-                            inputs.send_keys('crawler@tester.com')
-                            time.sleep(3)
-                            btn.click()
+#                             checkElement = False
+#                             elementPhone = driver.find_element(By.XPATH, "//form[@data-gtag-submit='popup']//input[@name='phone']")
+#                             elementName = driver.find_element(By.XPATH, "//form[@data-gtag-submit='popup']//input[@name='name']")
+#                             inputs = driver.find_element(By.XPATH, "//form[@data-gtag-submit='popup']//input[@name='email']")
+#                             btn = driver.find_element(By.XPATH, "//form[@data-gtag-submit='popup']//button[@type='submit']")
+#                             print(popupForm[0].get_attribute('id'))
+#                             poper = popupForm[0].get_attribute('id')
+#                             elementPhone.send_keys(n)
+#                             elementName.send_keys('crawler_checker')
+#                             inputs.send_keys('crawler@tester.com')
+#                             time.sleep(3)
+#                             btn.click()
                             
-                            print("//form[@id="+poper+"//button[@data-bs-dismiss='modal']")
-                            closebtn = driver.find_element(By.XPATH, "//div[contains (@id,"+poper+")]//button[@data-bs-dismiss='modal']")
-                            print(closebtn.location['x'])
-                            actions = ActionChains(driver) 
-                            actions.send_keys(Keys.ESCAPE)
-                            actions.perform()
-                            time.sleep(3)
-                            okbtn = driver.find_element(By.XPATH, "//button[text()='OK']")
+#                             print("//form[@id="+poper+"//button[@data-bs-dismiss='modal']")
+#                             closebtn = driver.find_element(By.XPATH, "//div[contains (@id,"+poper+")]//button[@data-bs-dismiss='modal']")
+#                             print(closebtn.location['x'])
+#                             actions = ActionChains(driver) 
+#                             actions.send_keys(Keys.ESCAPE)
+#                             actions.perform()
+#                             time.sleep(3)
+#                             okbtn = driver.find_element(By.XPATH, "//button[text()='OK']")
                             
-                            time.sleep(1)
-                            okbtn.click()
-                            # actions.move_to_element(closebtn,closebtn.location['x'], closebtn.location['y'])
-                            # actions.click()
-                            # actions.perform()
-                            # print(inputs)
+#                             time.sleep(1)
+#                             okbtn.click()
+#                             # actions.move_to_element(closebtn,closebtn.location['x'], closebtn.location['y'])
+#                             # actions.click()
+#                             # actions.perform()
+#                             # print(inputs)
                             
-                            time.sleep(20000)
-            # for form in all_forms
-            # print(buttons)
-            for datats in buttons:
+#                             time.sleep(20000)
+#             # for form in all_forms
+#             # print(buttons)
+#             for datats in buttons:
 
-                # driver.execute_script("arguments[0].setAttribute('id',arguments[0])",datats, "32423432")
+#                 # driver.execute_script("arguments[0].setAttribute('id',arguments[0])",datats, "32423432")
          
 
-                # print(datats)
-                # elemntid = datats.get_attribute('innerHTML')
-                # driver.execute_script('id=234234234234', all_forms)
-                # element = driver.find_element(By.TAG_NAME, 'form')
-                # myhtml = datats.get_attribute('outerHTML')
-                # soup = BeautifulSoup(myhtml)
-                # for link in soup.find_all('input'):
-                #     link.exe
-                #     link.send_keys('23r32r')
+#                 # print(datats)
+#                 # elemntid = datats.get_attribute('innerHTML')
+#                 # driver.execute_script('id=234234234234', all_forms)
+#                 # element = driver.find_element(By.TAG_NAME, 'form')
+#                 # myhtml = datats.get_attribute('outerHTML')
+#                 # soup = BeautifulSoup(myhtml)
+#                 # for link in soup.find_all('input'):
+#                 #     link.exe
+#                 #     link.send_keys('23r32r')
 
-                # elementName = elemntid.find_element(By.NAME, "email")
-                # elementEmail = driver.find_element(By.XPATH, "//form[@data-gtag-submit='get_consultation']//input[@name='email']")
-                # elementPhone = driver.find_element(By.XPATH, "//form[@data-gtag-submit='get_consultation']//input[@name='phone']")
+#                 # elementName = elemntid.find_element(By.NAME, "email")
+#                 # elementEmail = driver.find_element(By.XPATH, "//form[@data-gtag-submit='get_consultation']//input[@name='email']")
+#                 # elementPhone = driver.find_element(By.XPATH, "//form[@data-gtag-submit='get_consultation']//input[@name='phone']")
 
-            # time.sleep(99999)
-                driver.implicitly_wait(10)
-                driver.execute_script("arguments[0].scrollIntoView(true)", datats)
-                # time.sleep(5)
-            # driver.implicitly_wait(10)
-            # print("Element is visible? " + str(element.is_displayed()))
+#             # time.sleep(99999)
+#                 driver.implicitly_wait(10)
+#                 driver.execute_script("arguments[0].scrollIntoView(true)", datats)
+#                 # time.sleep(5)
+#             # driver.implicitly_wait(10)
+#             # print("Element is visible? " + str(element.is_displayed()))
 
           
 
 
-        # time.sleep(1000)
-        # print(element.get_attribute('outerHTML'))
-        # time.sleep(10)
-    # driver.quit()
+#         # time.sleep(1000)
+#         # print(element.get_attribute('outerHTML'))
+#         # time.sleep(10)
+#     # driver.quit()
 
-num_threads = 2  # You can change the number of threads as needed
+# num_threads = 2  # You can change the number of threads as needed
 
-threads = []
-cursor = 0
+# threads = []
+# cursor = 0
 
-for i in range(num_threads):
-    data = listArr()
-    length = len(data) // (num_threads - 1)
-    mydata = data[cursor * length: (cursor + 1) * length]
-    thread = threading.Thread(target=screenshot_thread, args=([mydata]))
-    cursor += 1
+# for i in range(num_threads):
+#     data = listArr()
+#     length = len(data) // (num_threads - 1)
+#     mydata = data[cursor * length: (cursor + 1) * length]
+#     thread = threading.Thread(target=screenshot_thread, args=([mydata]))
+#     cursor += 1
 
-    threads.append(thread)
-    thread.start()
+#     threads.append(thread)
+#     thread.start()
 
-for thread in threads:
-    thread.join()
+# for thread in threads:
+#     thread.join()
 
 

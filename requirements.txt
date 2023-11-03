@@ -10,3 +10,4 @@ selenium==4.14.0
 beautifulsoup4==4.12.2
 requests~=2.31.0
 pandas~=2.1.1
+pymongoarrow==1.1.0
