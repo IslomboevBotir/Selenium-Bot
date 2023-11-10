@@ -1,7 +1,7 @@
 import pandas
 import json
 
-get = pandas.read_excel('WEBSITES_DB1.xlsx')
+get = pandas.read_excel('WEBSITES_DB.xlsx')
 
 
 json_str = get.to_json(orient='records')

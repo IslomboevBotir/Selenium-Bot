@@ -2,6 +2,7 @@ import random
 import threading
 import time
 import datetime
+import json
 
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -59,11 +60,9 @@ def screenshot_thread(mydata):
 
         driver.implicitly_wait(10)
         driver.get(data['url'] + ref_url)
-        all_forms = driver.find_elements(By.TAG_NAME, 'form')
 
         driver.implicitly_wait(10)
 
-        buttons = driver.find_elements(By.XPATH, "//button[(@data-bs-toggle='modal')]")
         popupForm = None
         time.sleep(5)
         popupForm1 = driver.find_elements(by=By.ID, value='popupModal')
@@ -132,60 +131,87 @@ def screenshot_thread(mydata):
                         okbtn.click()
 
                         time.sleep(5)
+        try:
+            submit_for(driver, data['url'])
+        finally:
+            continue
 
-        input_elements = driver.execute_script("return document.querySelectorAll('input');")
-        n = random.randint(100000000, 999999999)
 
+def submit_for(driver, url):
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    time.sleep(2)
+    driver.execute_script("window.scrollTo(0, 0);")
+    time.sleep(2)
+    form_elements = driver.execute_script("return document.querySelectorAll('form');")
+    n = random.randint(100000000, 999999999)
+    for form in form_elements:
+        wait = WebDriverWait(driver, 10)
+        input_elements = form.find_elements(By.CSS_SELECTOR, 'input')
         for input_element in input_elements:
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", input_element)
+            time.sleep(3)
+            wait.until(EC.presence_of_element_located((By.XPATH, "//button")))
             input_type = input_element.get_attribute('type')
             input_name = input_element.get_attribute('name')
-            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", input_element)
-            wait = WebDriverWait(driver, 10)
-            wait.until(EC.visibility_of(input_element))
+            try:
+                if input_type == 'text' and input_name == 'name':
+                    time.sleep(2)
+                    input_element.send_keys('crawler_checker')
+                elif input_type == 'email':
+                    input_element.send_keys('crawler@tester.com')
 
-            if input_type == 'text' and input_name == 'name':
-                input_element.send_keys('crawler_checker')
-            elif input_type == 'email':
-                input_element.send_keys('crawler@tester.com')
-
-            elif input_type == 'tel':
-                input_element.send_keys(n)
-            elif input_name == 'datepicker' and input_type == 'text':
-                date_input = driver.find_element(By.NAME, "datepicker")
-                driver.execute_script("arguments[0].value = arguments[1];", date_input, new_today_date)
-                select_element = driver.find_element(By.XPATH, "//select[@name='interesting_projects']")
-                if select_element:
-                    select = Select(select_element)
-                    select.select_by_index(1)
-
-            form = input_element.find_element(By.XPATH, "./ancestor::form")
-            submit_button = form.find_element(By.XPATH, ".//button[@type='submit']")
+                elif input_type == 'tel':
+                    input_element.send_keys(n)
+                    time.sleep(2)
+                elif input_name == 'datepicker' and input_type == 'text':
+                    date_input = driver.find_element(By.NAME, "datepicker")
+                    driver.execute_script("arguments[0].value = arguments[1];", date_input, new_today_date)
+                    select_element = driver.find_element(By.XPATH, "//select[@name='interesting_projects']")
+                    time.sleep(2)
+                    if select_element:
+                        select = Select(select_element)
+                        select.select_by_index(2)
+                        time.sleep(2)
+            except Exception as e:
+                print(f"An exception occurred: {e}")
+        submit_button = form.find_element(By.XPATH, ".//button[@type='submit']")
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", submit_button)
+        try:
             submit_button.click()
-            time.sleep(3)
-            okbtn = driver.find_element(By.XPATH, "//button[text()='OK']")
-            time.sleep(1)
-            okbtn.click()
-        time.sleep(5)
-        for datat in buttons:
-            driver.implicitly_wait(10)
-            driver.execute_script("arguments[0].scrollIntoView(true)", datat)
+        except ElementClickInterceptedException as e:
+            print(f"ElemenCliclInterecptedException: {e}")
+        time.sleep(3)
+        okbtn = driver.find_element(By.XPATH, "//button[text()='OK']")
+        time.sleep(1)
+        okbtn.click()
+        # log = driver.get_log('server')
 
 
-num_threads = 2  # You can change the number of threads as needed
+def ajax_check(driver, expected_name, expected_email):
+    ...
 
-threads = []
-cursor = 0
 
-for i in range(num_threads):
-    data = listArr()
-    length = len(data) // (num_threads - 1)
-    mydata = data[cursor * length: (cursor + 1) * length]
-    thread = threading.Thread(target=screenshot_thread, args=([mydata]))
-    cursor += 1
+def main():
+    num_threads = 2  # You can change the number of threads as needed
 
-    threads.append(thread)
-    thread.start()
+    threads = []
+    cursor = 0
 
-for thread in threads:
-    thread.join()
+    for i in range(num_threads):
+        data = listArr()
+        length = len(data) // (num_threads - 1)
+        mydata = data[cursor * length: (cursor + 1) * length]
+        thread = threading.Thread(target=screenshot_thread, args=([mydata]))
+        cursor += 1
+
+        threads.append(thread)
+        thread.start()
+
+    for thread in threads:
+        thread.join()
+
+
+if __name__ == "__main__":
+    main()
+
 
