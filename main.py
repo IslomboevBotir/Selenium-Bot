@@ -4,6 +4,7 @@ import threading
 import time
 import datetime
 
+import requests
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from excelParse import listArr
@@ -132,6 +133,7 @@ def screenshot_thread(mydata):
 
                         time.sleep(5)
                         ajax_check(driver, n)
+                        api_check(n)
         try:
             submit_for(driver)
         finally:
@@ -160,21 +162,23 @@ def submit_for(driver):
                     input_element.send_keys('crawler_checker')
                 elif input_type == 'email':
                     input_element.send_keys('crawler@tester.com')
-
                 elif input_type == 'tel':
                     input_element.send_keys(n)
                     time.sleep(2)
                 elif input_name == 'datepicker' and input_type == 'text':
                     date_input = driver.find_element(By.NAME, "datepicker")
                     driver.execute_script("arguments[0].value = arguments[1];", date_input, new_today_date)
-                    select_element = driver.find_element(By.XPATH, "//select[@name='interesting_projects']")
+                    try:
+                        select_element = driver.find_element(By.XPATH, "//select[@name='interesting_projects']")
+                    except NoSuchElementException as e:
+                        print(f"Ошибка: элемент не найден форма работает некорректно. {e}")
                     time.sleep(2)
                     if select_element:
                         select = Select(select_element)
                         select.select_by_index(2)
                         time.sleep(2)
-            except Exception as e:
-                print(f"An exception occurred: {e}")
+            finally:
+                continue
         submit_button = form.find_element(By.XPATH, ".//button[@type='submit']")
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", submit_button)
         try:
@@ -186,6 +190,7 @@ def submit_for(driver):
         time.sleep(1)
         okbtn.click()
         ajax_check(driver, n)
+        api_check(n)
 
 
 def ajax_check(driver, n):
@@ -198,11 +203,6 @@ def ajax_check(driver, n):
     else:
         print('Всё плохо есть ошибка')
     data_body = json.loads(body.decode('utf-8'))
-    number = data_body.get('phone')
-    if number == '+998' + str(n):
-        print('Всё окей номер передался')
-    else:
-        print('Номер передался некорректно либо вообще не передался')
     name = data_body.get('name')
     if name == 'crawler_checker':
         print('Всё окей имя передалось')
@@ -213,10 +213,35 @@ def ajax_check(driver, n):
         print('Всё окей почта передалось')
     else:
         print('Почта передалась некорректно либо вообще не передалась')
+    number = data_body.get('phone')
+    if number == '+998' + str(n):
+        print('Всё окей номер передался')
+    else:
+        print('Номер передался некорректно либо вообще не передался')
 
 
-def api_check():
-    ...
+def api_check(n):
+    url = 'https://form.sales-inquiries.ae/api/forms/today/'
+    response = requests.get(url)
+    data = response.json()
+
+    if "items" in data and data["items"]:
+        first_item = data["items"][0]
+        name = first_item.get("name", "")
+        if name == 'crawler_checker':
+            print("Всё окей 2-ой тест на имя пройден")
+        else:
+            print("2-ой тест на имя не пройден")
+        email = first_item.get("email", "")
+        if email == 'crawler@tester.com':
+            print("Всё окей 2-ой тест на email пройден ")
+        else:
+            print("2-ой тест по email не пройден")
+        phone = first_item.get("phone", "")
+        if phone == '+998' + str(n):
+            print("Всё окей 2-ой тест на номер телефона пройден")
+        else:
+            print("2-ой тест на номер телефона не пройден")
 
 
 def main():
