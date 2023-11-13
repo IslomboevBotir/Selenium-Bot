@@ -1,15 +1,15 @@
+import json
 import random
 import threading
 import time
 import datetime
-import json
 
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from excelParse import listArr
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.chrome.options import Options
-from selenium import webdriver
+from seleniumwire import webdriver
 from pymongo import MongoClient
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.keys import Keys
@@ -131,22 +131,23 @@ def screenshot_thread(mydata):
                         okbtn.click()
 
                         time.sleep(5)
+                        ajax_check(driver, n)
         try:
-            submit_for(driver, data['url'])
+            submit_for(driver)
         finally:
             continue
 
 
-def submit_for(driver, url):
+def submit_for(driver):
     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
     time.sleep(2)
     driver.execute_script("window.scrollTo(0, 0);")
     time.sleep(2)
     form_elements = driver.execute_script("return document.querySelectorAll('form');")
-    n = random.randint(100000000, 999999999)
     for form in form_elements:
         wait = WebDriverWait(driver, 10)
         input_elements = form.find_elements(By.CSS_SELECTOR, 'input')
+        n = random.randint(100000000, 999999999)
         for input_element in input_elements:
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", input_element)
             time.sleep(3)
@@ -184,10 +185,37 @@ def submit_for(driver, url):
         okbtn = driver.find_element(By.XPATH, "//button[text()='OK']")
         time.sleep(1)
         okbtn.click()
-        # log = driver.get_log('server')
+        ajax_check(driver, n)
 
 
-def ajax_check(driver, expected_name, expected_email):
+def ajax_check(driver, n):
+    desired_url = "https://form.sales-inquiries.ae/api/forms/receiver/"
+    request = list(filter(lambda x: x.url == desired_url, driver.requests))[-1]
+    body = request.body
+    status_code = request.response.status_code
+    if status_code == 200:
+        print('Всё окей форма передалась')
+    else:
+        print('Всё плохо есть ошибка')
+    data_body = json.loads(body.decode('utf-8'))
+    number = data_body.get('phone')
+    if number == '+998' + str(n):
+        print('Всё окей номер передался')
+    else:
+        print('Номер передался некорректно либо вообще не передался')
+    name = data_body.get('name')
+    if name == 'crawler_checker':
+        print('Всё окей имя передалось')
+    else:
+        print('Имя передалось некорректно либо вообще не передалось')
+    email = data_body.get('email')
+    if email == 'crawler@tester.com':
+        print('Всё окей почта передалось')
+    else:
+        print('Почта передалась некорректно либо вообще не передалась')
+
+
+def api_check():
     ...
 
 
@@ -213,5 +241,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
