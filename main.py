@@ -133,7 +133,6 @@ def screenshot_thread(mydata):
                         okbtn.click()
 
                         time.sleep(5)
-
                         ajax_check(driver, n)
                         api_check(n)
                         metrics_check(driver)
@@ -192,7 +191,6 @@ def submit_for(driver: WebDriver):
         okbtn = driver.find_element(By.XPATH, "//button[text()='OK']")
         time.sleep(1)
         okbtn.click()
-
         ajax_check(driver, n)
         api_check(n)
         metrics_check(driver)
