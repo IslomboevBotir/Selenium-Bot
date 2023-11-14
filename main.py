@@ -5,6 +5,7 @@ import time
 import datetime
 
 import requests
+from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from excelParse import listArr
@@ -132,15 +133,17 @@ def screenshot_thread(mydata):
                         okbtn.click()
 
                         time.sleep(5)
+
                         ajax_check(driver, n)
                         api_check(n)
+                        metrics_check(driver)
         try:
             submit_for(driver)
         finally:
             continue
 
 
-def submit_for(driver):
+def submit_for(driver: WebDriver):
     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
     time.sleep(2)
     driver.execute_script("window.scrollTo(0, 0);")
@@ -189,11 +192,13 @@ def submit_for(driver):
         okbtn = driver.find_element(By.XPATH, "//button[text()='OK']")
         time.sleep(1)
         okbtn.click()
+
         ajax_check(driver, n)
         api_check(n)
+        metrics_check(driver)
 
 
-def ajax_check(driver, n):
+def ajax_check(driver: WebDriver, n: int):
     desired_url = "https://form.sales-inquiries.ae/api/forms/receiver/"
     request = list(filter(lambda x: x.url == desired_url, driver.requests))[-1]
     body = request.body
@@ -220,7 +225,7 @@ def ajax_check(driver, n):
         print('Номер передался некорректно либо вообще не передался')
 
 
-def api_check(n):
+def api_check(n: int):
     url = 'https://form.sales-inquiries.ae/api/forms/today/'
     response = requests.get(url)
     data = response.json()
@@ -242,6 +247,27 @@ def api_check(n):
             print("Всё окей 2-ой тест на номер телефона пройден")
         else:
             print("2-ой тест на номер телефона не пройден")
+
+
+def metrics_check(driver: WebDriver):
+    page_source = driver.page_source
+    gtm_code = 'GTM-TMT24JCZ'
+    if gtm_code in page_source:
+        print(f'Код Google Tag Manager {gtm_code} присутствует')
+    else:
+        print(f'Код Google Tag Manager {gtm_code} отсутствует')
+
+    ga4_code = 'G-42ZYSQVM8D'
+    if ga4_code in page_source:
+        print(f'Код Google Analytics4 {ga4_code} присутствует')
+    else:
+        print(f'Код Google Analytics4 {ga4_code} отсутствует')
+
+    yandex_code = '94366143'
+    if yandex_code in page_source:
+        print(f'Код Яндекс.Метрика {yandex_code} присутствует')
+    else:
+        print(f'Код Яндекс.Метрика {yandex_code} отсутствует')
 
 
 def main():
