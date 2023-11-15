@@ -1,18 +1,18 @@
 import json
+import multiprocessing
 import random
 import threading
 import time
 import datetime
-
 import requests
+
+from seleniumwire import webdriver
+from selenium.webdriver.chrome.webdriver import Options
+from pymongo import MongoClient
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from excelParse import listArr
 from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.chrome.options import Options
-from seleniumwire import webdriver
-from pymongo import MongoClient
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
@@ -23,6 +23,8 @@ from selenium.common.exceptions import NoSuchElementException, ElementClickInter
     InvalidSwitchToTargetException, MoveTargetOutOfBoundsException, NoAlertPresentException, NoSuchAttributeException, \
     NoSuchCookieException, NoSuchFrameException, NoSuchWindowException, StaleElementReferenceException, \
     TimeoutException, UnableToSetCookieException, UnexpectedAlertPresentException, UnexpectedTagNameException
+
+from excelParse import listArr
 
 client = MongoClient('mongodb://localhost:27017/Crawler')
 mydatabase = client['Crawler']
@@ -44,27 +46,17 @@ print(namedir.find_one())
 
 
 def screenshot_thread(mydata):
-    chrome_options = Options()
-    chrome_options.add_argument('--log-level=CRITICAL')
-    chrome_options.add_argument('--disable-extensions')
-    chrome_options.add_argument('--disable-gpu')
-    chrome_options.add_argument('--enable-automation')
-    chrome_options.add_argument('--ignore-certificate-errors')
-    chrome_options.add_argument('--ignore-ssl-errors')
-    chrome_options.add_argument("--enable-logging")
-    chrome_options.add_argument('--no-sandbox')
-    chrome_options.add_argument('--disable-dev-shm-usage')
-    driver = webdriver.Chrome()
-
+    path_of_account_data = '/home/hermes/Python_projects/ax-crawler/Chrome'
+    options = Options()
+    options.add_argument(f"user-data-dir={path_of_account_data}")
+    driver = webdriver.Chrome(options=options)
+    WebDriverWait(driver, 10)
     for index, data in enumerate(mydata):
 
         ref_url = "?new_format_start&utm_source=google&utm_medium=cpc&utm_campaign_id={campaignid}&utm_term={keyword}&utm_adgroup_id={adgroupid}&target_id={targetid}&loc_interest_ms={loc_interest_ms}&loc_physical_ms={loc_physical_ms}&matchtype={matchtype}&network={network}&device={device}&device_model={device_model}&if_mobile={ifmobile:[mobile]}&not_mobile={ifnotmobile:[computer_tablet]}&if_search={ifsearch:[google_search_network]}&if_display={ifcontent:[google_display_network]}&ad_id={creative}&placement={placement}&target={target}&ad_position={adposition}&source_id={sourceid}&ad_type={adtype}&new_format_end"
-
         driver.implicitly_wait(10)
         driver.get(data['url'] + ref_url)
-
         driver.implicitly_wait(10)
-
         popupForm = None
         time.sleep(5)
         popupForm1 = driver.find_elements(by=By.ID, value='popupModal')
@@ -269,23 +261,15 @@ def metrics_check(driver: WebDriver):
 
 
 def main():
-    num_threads = 2  # You can change the number of threads as needed
 
-    threads = []
-    cursor = 0
+    data = listArr()
+
+    num_threads = 2
+    length = len(data) // num_threads
 
     for i in range(num_threads):
-        data = listArr()
-        length = len(data) // (num_threads - 1)
-        mydata = data[cursor * length: (cursor + 1) * length]
-        thread = threading.Thread(target=screenshot_thread, args=([mydata]))
-        cursor += 1
-
-        threads.append(thread)
-        thread.start()
-
-    for thread in threads:
-        thread.join()
+        mydata = data[i * length: (i + 1) * length]
+        screenshot_thread(mydata)
 
 
 if __name__ == "__main__":
