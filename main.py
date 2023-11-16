@@ -1,7 +1,5 @@
 import json
-import multiprocessing
 import random
-import threading
 import time
 import datetime
 import requests
@@ -33,9 +31,9 @@ todayDate = mydatabase['todayDate']
 today_date = datetime.date.today()
 new_today_date = today_date.strftime("%d/%m/%Y")
 todayDate.insert_one({"time": new_today_date, "report": []})
-searchDate = todayDate.find_one({"time": "02/00/2023"})
-if searchDate != None:
-    if new_today_date == searchDate['time']:
+search_date = todayDate.find_one({"time": "02/00/2023"})
+if search_date is not None:
+    if new_today_date == search_date['time']:
         print("что то есть")
     else:
         print("нет")
@@ -53,27 +51,33 @@ def screenshot_thread(mydata):
     WebDriverWait(driver, 10)
     for index, data in enumerate(mydata):
 
-        ref_url = "?new_format_start&utm_source=google&utm_medium=cpc&utm_campaign_id={campaignid}&utm_term={keyword}&utm_adgroup_id={adgroupid}&target_id={targetid}&loc_interest_ms={loc_interest_ms}&loc_physical_ms={loc_physical_ms}&matchtype={matchtype}&network={network}&device={device}&device_model={device_model}&if_mobile={ifmobile:[mobile]}&not_mobile={ifnotmobile:[computer_tablet]}&if_search={ifsearch:[google_search_network]}&if_display={ifcontent:[google_display_network]}&ad_id={creative}&placement={placement}&target={target}&ad_position={adposition}&source_id={sourceid}&ad_type={adtype}&new_format_end"
+        ref_url = ("?new_format_start&utm_source=google&utm_medium=cpc&utm_campaign_id={campaignid}&utm_term={"
+                   "keyword}&utm_adgroup_id={adgroupid}&target_id={targetid}&loc_interest_ms={"
+                   "loc_interest_ms}&loc_physical_ms={loc_physical_ms}&matchtype={matchtype}&network={"
+                   "network}&device={device}&device_model={device_model}&if_mobile={ifmobile:[mobile]}&not_mobile={"
+                   "ifnotmobile:[computer_tablet]}&if_search={ifsearch:[google_search_network]}&if_display={"
+                   "ifcontent:[google_display_network]}&ad_id={creative}&placement={placement}&target={"
+                   "target}&ad_position={adposition}&source_id={sourceid}&ad_type={adtype}&new_format_end")
         driver.implicitly_wait(10)
         driver.get(data['url'] + ref_url)
         driver.implicitly_wait(10)
-        popupForm = None
+        popup_form = None
         time.sleep(5)
-        popupForm1 = driver.find_elements(by=By.ID, value='popupModal')
-        popupForm2 = driver.find_elements(by=By.ID, value='Modal')
-        popupForm3 = driver.find_elements(by=By.ID, value='popup')
-        if len(popupForm1) > 0:
-            popupForm = popupForm1
+        popup_form1 = driver.find_elements(by=By.ID, value='popupModal')
+        popup_form2 = driver.find_elements(by=By.ID, value='Modal')
+        popup_form3 = driver.find_elements(by=By.ID, value='popup')
+        if len(popup_form1) > 0:
+            popup_form = popup_form1
             print('popupForm1 - ТУТ что то есть ')
-        if len(popupForm2) > 0:
-            popupForm = popupForm2
+        if len(popup_form2) > 0:
+            popup_form = popup_form2
             print('popupForm2 - ТУТ что то есть ')
-        if len(popupForm3) > 0:
-            popupForm = popupForm3
+        if len(popup_form3) > 0:
+            popup_form = popup_form3
             print('popupForm3 - ТУТ что то есть ')
         try:
 
-            popupForm
+            popup_form
 
         except (NoSuchElementException, ElementClickInterceptedException, ElementNotInteractableException,
                 ElementNotSelectableException, ElementNotVisibleException, ImeActivationFailedException,
@@ -84,36 +88,37 @@ def screenshot_thread(mydata):
                 NoSuchWindowException, StaleElementReferenceException, TimeoutException, UnableToSetCookieException,
                 UnexpectedAlertPresentException, UnexpectedTagNameException) as err:
             pass
-        if popupForm:
-            mytime = 1
+        if popup_form:
+            my_time = 1
             timing = time.time()
-            checkElement = True
-            while checkElement:
-                if time.time() - timing > mytime:
+            check_element = True
+            while check_element:
+                if time.time() - timing > my_time:
                     timing = time.time()
                     print(data['url'])
-                    if popupForm[0].get_attribute('style') == 'display: block;':
+                    if popup_form[0].get_attribute('style') == 'display: block;':
                         n = random.randint(100000000, 999999999)
 
-                        checkElement = False
-                        elementPhone = driver.find_element(By.XPATH,
-                                                           "//form[@data-gtag-submit='popup']//input[@name='phone']")
-                        elementName = driver.find_element(By.XPATH,
-                                                          "//form[@data-gtag-submit='popup']//input[@name='name']")
+                        check_element = False
+                        element_phone = driver.find_element(By.XPATH,
+                                                            "//form[@data-gtag-submit='popup']//input[@name='phone']")
+                        element_name = driver.find_element(By.XPATH,
+                                                           "//form[@data-gtag-submit='popup']//input[@name='name']")
                         inputs = driver.find_element(By.XPATH,
                                                      "//form[@data-gtag-submit='popup']//input[@name='email']")
                         btn = driver.find_element(By.XPATH, "//form[@data-gtag-submit='popup']//button[@type='submit']")
-                        print(popupForm[0].get_attribute('id'))
-                        poper = popupForm[0].get_attribute('id')
-                        elementPhone.send_keys(n)
-                        elementName.send_keys('crawler_checker')
+                        print(popup_form[0].get_attribute('id'))
+                        poper = popup_form[0].get_attribute('id')
+                        element_phone.send_keys(n)
+                        element_name.send_keys('crawler_checker')
                         inputs.send_keys('crawler@tester.com')
                         time.sleep(3)
                         btn.click()
 
                         print("//form[@id=" + poper + "//button[@data-bs-dismiss='modal']")
                         closebtn = driver.find_element(By.XPATH,
-                                                       "//div[contains (@id," + poper + ")]//button[@data-bs-dismiss='modal']")
+                                                       "//div[contains (@id," + poper + ")]//button["
+                                                                                        "@data-bs-dismiss='modal']")
                         print(closebtn.location['x'])
                         actions = ActionChains(driver)
                         actions.send_keys(Keys.ESCAPE)
@@ -128,6 +133,7 @@ def screenshot_thread(mydata):
                         ajax_check(driver, n)
                         api_check(n)
                         metrics_check(driver)
+
         try:
             submit_for(driver)
         finally:
@@ -261,7 +267,6 @@ def metrics_check(driver: WebDriver):
 
 
 def main():
-
     data = listArr()
 
     num_threads = 2
